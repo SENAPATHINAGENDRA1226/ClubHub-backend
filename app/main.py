@@ -28,19 +28,13 @@ from app.ws import router as ws_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url="/openapi.json" if settings.DEBUG else None,
+    openapi_url="/openapi.json",
 )
 
-# CORS Middleware setup
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-]
-
+# CORS Middleware setup - Allow all origins for production frontend integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
