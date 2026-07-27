@@ -55,7 +55,7 @@ async def list_media_items(
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def upload_media_file(
     file: UploadFile = File(...),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "committee")),
 ):
     uploads_dir = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "media", "uploads"
@@ -90,7 +90,7 @@ async def get_media_item(
 @router.post("", response_model=MediaItemResponse, status_code=status.HTTP_201_CREATED)
 async def create_media_item(
     body: MediaItemCreate,
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "committee")),
     db: AsyncSession = Depends(get_async_session),
 ):
     media_item = MediaItem(
@@ -110,7 +110,7 @@ async def create_media_item(
 async def update_media_item(
     media_id: uuid.UUID,
     body: MediaItemUpdate,
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "committee")),
     db: AsyncSession = Depends(get_async_session),
 ):
     res = await db.execute(select(MediaItem).filter_by(id=media_id))
@@ -132,7 +132,7 @@ async def update_media_item(
 @router.delete("/{media_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_media_item(
     media_id: uuid.UUID,
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "committee")),
     db: AsyncSession = Depends(get_async_session),
 ):
     res = await db.execute(select(MediaItem).filter_by(id=media_id))

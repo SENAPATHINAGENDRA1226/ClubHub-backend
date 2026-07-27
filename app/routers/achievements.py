@@ -78,7 +78,7 @@ async def get_achievement(
 @router.post("", response_model=AchievementResponse, status_code=status.HTTP_201_CREATED)
 async def create_achievement(
     body: AchievementCreate,
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "committee")),
     db: AsyncSession = Depends(get_async_session),
 ):
     achievement = Achievement(**body.model_dump())
@@ -95,7 +95,7 @@ async def create_achievement(
 async def update_achievement(
     achievement_id: uuid.UUID,
     body: AchievementUpdate,
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "committee")),
     db: AsyncSession = Depends(get_async_session),
 ):
     res = await db.execute(select(Achievement).filter_by(id=achievement_id))
@@ -117,7 +117,7 @@ async def update_achievement(
 @router.delete("/{achievement_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_achievement(
     achievement_id: uuid.UUID,
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "committee")),
     db: AsyncSession = Depends(get_async_session),
 ):
     res = await db.execute(select(Achievement).filter_by(id=achievement_id))
