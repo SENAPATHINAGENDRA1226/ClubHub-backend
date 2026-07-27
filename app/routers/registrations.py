@@ -18,8 +18,9 @@ from app.schemas.registrations import (
     AchievementUpdate,
 )
 from app.models.content import Achievement
+from fastapi.responses import Response
 from app.services.broadcast import broadcast_event
-from app.services.qr import generate_registration_qr
+from app.services.qr import generate_registration_qr, generate_qr_png_bytes
 
 router = APIRouter(prefix="/api/registrations", tags=["Event Registrations"])
 
@@ -264,3 +265,23 @@ async def update_registration_achievement(
     await db.refresh(registration)
     
     return RegistrationResponse.model_validate(registration)
+
+
+@router.get("/qr/{filename}")
+async def get_registration_qr_image(
+    filename: str,
+    db: AsyncSession = Depends(get_async_session),
+):
+    clean_num = filename.replace(".png", "")
+    query = select(EventRegistration).filter(
+        (EventRegistration.registration_number == clean_num) |
+        (EventRegistration.id == clean_num)
+    )
+    res = await db.execute(query)
+    reg = res.scalars().first()
+    if not reg:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR image not found")
+
+    img_bytes = generate_qr_png_bytes(reg.qr_code_data)
+    return Response(content=img_bytes, media_type="image/png")
+

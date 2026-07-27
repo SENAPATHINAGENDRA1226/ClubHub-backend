@@ -1,5 +1,6 @@
 import hmac
 import hashlib
+import io
 import json
 import os
 import uuid
@@ -7,6 +8,21 @@ from typing import Tuple
 import qrcode
 
 from app.core.config import settings
+
+
+def generate_qr_png_bytes(qr_code_data: str) -> bytes:
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(qr_code_data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf)
+    return buf.getvalue()
 
 
 def generate_registration_qr(
@@ -35,25 +51,16 @@ def generate_registration_qr(
     }
     qr_code_data = json.dumps(payload_dict)
 
-    # 3. Generate QR image
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(qr_code_data)
-    qr.make(fit=True)
-
-    img = qr.make_image(fill_color="black", back_color="white")
-
-    # 4. Save to media/qr/{registration_number}.png
+    # 3. Generate and save QR image
     media_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "media", "qr")
     os.makedirs(media_dir, exist_ok=True)
 
     filename = f"{registration_number}.png"
     file_path = os.path.join(media_dir, filename)
-    img.save(file_path)
 
-    qr_code_image_url = f"/media/qr/{filename}"
+    img_bytes = generate_qr_png_bytes(qr_code_data)
+    with open(file_path, "wb") as f:
+        f.write(img_bytes)
+
+    qr_code_image_url = f"/api/registrations/qr/{registration_number}.png"
     return qr_code_data, qr_code_image_url
