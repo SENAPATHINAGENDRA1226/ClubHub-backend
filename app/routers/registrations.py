@@ -175,7 +175,7 @@ async def list_event_registrations(
     event_id: uuid.UUID,
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "committee")),
     db: AsyncSession = Depends(get_async_session),
 ):
     query = (
