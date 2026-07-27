@@ -273,15 +273,32 @@ async def get_registration_qr_image(
     db: AsyncSession = Depends(get_async_session),
 ):
     clean_num = filename.replace(".png", "")
-    query = select(EventRegistration).filter(
-        (EventRegistration.registration_number == clean_num) |
-        (EventRegistration.id == clean_num)
-    )
+
+    try:
+        uuid_obj = uuid.UUID(clean_num)
+        query = select(EventRegistration).filter(
+            (EventRegistration.registration_number == clean_num) |
+            (EventRegistration.id == uuid_obj)
+        )
+    except ValueError:
+        query = select(EventRegistration).filter(
+            EventRegistration.registration_number == clean_num
+        )
+
     res = await db.execute(query)
     reg = res.scalars().first()
     if not reg:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR image not found")
 
-    img_bytes = generate_qr_png_bytes(reg.qr_code_data)
+    qr_data = reg.qr_code_data
+    if not qr_data:
+        qr_data, _ = generate_registration_qr(
+            registration_number=reg.registration_number,
+            event_id=reg.event_id,
+            student_id=reg.student_id,
+        )
+
+    img_bytes = generate_qr_png_bytes(qr_data)
     return Response(content=img_bytes, media_type="image/png")
+
 
