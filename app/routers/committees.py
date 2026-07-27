@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 from app.core.database import get_async_session
 from app.core.deps import get_current_user, require_role, verify_committee_access
 from app.models.committee import Committee, CommitteeAdmin, CommitteeMember
-from app.models.enums import CommitteeCategory, CommitteeSubCategory
+from app.models.enums import CommitteeCategory, CommitteeSubCategory, UserRole
 from app.models.user import User
 from app.schemas.committees import (
     CommitteeCreate,
