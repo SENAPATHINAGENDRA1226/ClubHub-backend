@@ -227,14 +227,41 @@ async def add_committee_member(
     await verify_committee_access(current_user, committee_id, db)
 
     c_res = await db.execute(select(Committee).filter_by(id=committee_id))
-    if not c_res.scalars().first():
+    committee = c_res.scalars().first()
+    if not committee:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Committee not found")
+
+    matched_user = None
+    if body.user_id:
+        u_res = await db.execute(select(User).filter_by(id=body.user_id))
+        matched_user = u_res.scalars().first()
+    elif body.email and body.email.strip():
+        u_res = await db.execute(select(User).filter_by(email=body.email.strip().lower()))
+        matched_user = u_res.scalars().first()
 
     member = CommitteeMember(
         committee_id=committee_id,
-        **body.model_dump(),
+        user_id=matched_user.id if matched_user else body.user_id,
+        full_name=body.full_name,
+        email=body.email or (matched_user.email if matched_user else ""),
+        role_title=body.role_title,
+        photo_url=body.photo_url,
+        bio=body.bio,
+        order_index=body.order_index,
     )
     db.add(member)
+
+    if matched_user:
+        ca_res = await db.execute(
+            select(CommitteeAdmin).filter_by(user_id=matched_user.id, committee_id=committee_id)
+        )
+        if not ca_res.scalars().first():
+            db.add(CommitteeAdmin(user_id=matched_user.id, committee_id=committee_id))
+
+        user_role_str = str(matched_user.role.value if hasattr(matched_user.role, "value") else matched_user.role)
+        if user_role_str == "student":
+            matched_user.role = UserRole.COMMITTEE
+
     await db.commit()
     await db.refresh(member)
 
@@ -258,6 +285,7 @@ async def add_committee_member(
     )
 
     return member
+
 
 
 # Separate router prefix for committee member direct mutations
