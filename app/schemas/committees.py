@@ -8,7 +8,7 @@ from app.models.enums import CommitteeCategory, CommitteeSubCategory
 
 class CommitteeMemberCreate(BaseModel):
     full_name: str = Field(..., min_length=2)
-    email: str
+    email: Optional[str] = ""
     role_title: str
     photo_url: Optional[str] = None
     bio: Optional[str] = None
