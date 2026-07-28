@@ -310,6 +310,12 @@ async def delete_user_by_admin(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    if user.role == UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Admin accounts cannot be deleted.",
+        )
+
     c_ids = [ca.committee_id for ca in user.committee_admins] if user.committee_admins else []
     response_data = _build_admin_user_response(user, c_ids).model_dump(mode="json")
     u_id_str = str(user.id)
