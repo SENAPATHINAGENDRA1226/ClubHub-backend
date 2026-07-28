@@ -31,9 +31,9 @@ router = APIRouter(prefix="/api/alumni", tags=["Alumni"])
 async def list_alumni(
     graduation_year: Optional[int] = Query(None, description="Filter by graduation year"),
     branch: Optional[str] = Query(None, description="Filter by branch"),
-    is_published: Optional[bool] = Query(True, description="Filter by published status"),
+    is_published: Optional[bool] = Query(None, description="Filter by published status"),
     status_filter: Optional[str] = Query(None, alias="status", description="pending/approved/rejected/all"),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_async_session),
 ):
