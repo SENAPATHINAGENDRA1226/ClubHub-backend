@@ -89,21 +89,21 @@ async def student_login(
     login_data: LoginRequest,
     db: AsyncSession = Depends(get_async_session),
 ):
-    query = select(User).options(selectinload(User.student_profile)).filter_by(email=login_data.email)
+    clean_email = login_data.email.strip().lower()
+    query = select(User).options(selectinload(User.student_profile)).filter(func.lower(User.email) == clean_email)
     res = await db.execute(query)
     user = res.scalars().first()
 
-    # Requirement: If email doesn't exist -> return specific error code "ACCOUNT_NOT_FOUND"
-    if not user or user.role != UserRole.STUDENT:
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"detail": "ACCOUNT_NOT_FOUND", "code": "ACCOUNT_NOT_FOUND"},
+            detail="ACCOUNT_NOT_FOUND",
         )
 
-    if not verify_password(login_data.password, user.hashed_password):
+    if user.role != UserRole.STUDENT or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
+            detail="INVALID_CREDENTIALS",
         )
 
     if not user.is_active:
@@ -135,14 +135,21 @@ async def admin_login(
     login_data: LoginRequest,
     db: AsyncSession = Depends(get_async_session),
 ):
-    query = select(User).options(selectinload(User.admin_profile)).filter_by(email=login_data.email)
+    clean_email = login_data.email.strip().lower()
+    query = select(User).options(selectinload(User.admin_profile)).filter(func.lower(User.email) == clean_email)
     res = await db.execute(query)
     user = res.scalars().first()
 
-    if not user or user.role != UserRole.ADMIN or not verify_password(login_data.password, user.hashed_password):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="ACCOUNT_NOT_FOUND",
+        )
+
+    if user.role != UserRole.ADMIN or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid admin credentials",
+            detail="INVALID_CREDENTIALS",
         )
 
     if not user.is_active:
@@ -170,14 +177,21 @@ async def committee_login(
     login_data: LoginRequest,
     db: AsyncSession = Depends(get_async_session),
 ):
-    query = select(User).filter_by(email=login_data.email)
+    clean_email = login_data.email.strip().lower()
+    query = select(User).filter(func.lower(User.email) == clean_email)
     res = await db.execute(query)
     user = res.scalars().first()
 
-    if not user or user.role != UserRole.COMMITTEE or not verify_password(login_data.password, user.hashed_password):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="ACCOUNT_NOT_FOUND",
+        )
+
+    if user.role != UserRole.COMMITTEE or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid committee credentials",
+            detail="INVALID_CREDENTIALS",
         )
 
     if not user.is_active:
