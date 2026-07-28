@@ -324,7 +324,6 @@ async def get_current_user_me(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session),
 ):
-    Optional = None
     profile_dict: Optional[Dict[str, Any]] = None
     onboarding_completed = False
     committee_ids = None
