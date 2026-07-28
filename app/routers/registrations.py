@@ -137,7 +137,7 @@ async def register_for_event(
 async def get_my_registrations(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    current_user: User = Depends(require_role("student")),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session),
 ):
     sp_res = await db.execute(select(StudentProfile).filter_by(user_id=current_user.id))
