@@ -181,15 +181,27 @@ async def update_committee(
 @router.delete("/{committee_id}", response_model=CommitteeResponse)
 async def delete_committee(
     committee_id: uuid.UUID,
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    await verify_committee_access(current_user, committee_id, db)
+
     res = await db.execute(
-        select(Committee).options(selectinload(Committee.members)).filter_by(id=committee_id)
+        select(Committee)
+        .options(
+            selectinload(Committee.members),
+            selectinload(Committee.admins),
+        )
+        .filter_by(id=committee_id)
     )
     committee = res.scalars().first()
     if not committee:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Committee not found")
+
+    for m in (committee.members or []):
+        await db.delete(m)
+    for a in (committee.admins or []):
+        await db.delete(a)
 
     response_data = CommitteeResponse.model_validate(committee).model_dump(mode="json")
     c_id_str = str(committee.id)
