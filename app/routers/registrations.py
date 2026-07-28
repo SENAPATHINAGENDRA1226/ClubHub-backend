@@ -7,7 +7,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_async_session
-from app.core.deps import require_role
+from app.core.deps import get_current_user, require_role
 from app.models.enums import EventCategory, RegistrationStatus
 from app.models.event import Event, EventRegistration
 from app.models.user import StudentProfile, User
