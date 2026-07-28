@@ -322,7 +322,7 @@ async def update_event(
 @router.delete("/{event_id}", response_model=EventResponse)
 async def delete_event(
     event_id: uuid.UUID,
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "committee")),
     db: AsyncSession = Depends(get_async_session),
 ):
     res = await db.execute(select(Event).filter_by(id=event_id))
@@ -332,6 +332,11 @@ async def delete_event(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Event not found",
         )
+
+    # Clean up event registrations explicitly to prevent foreign key or lazy load issues
+    reg_res = await db.execute(select(EventRegistration).filter_by(event_id=event_id))
+    for r in reg_res.scalars().all():
+        await db.delete(r)
 
     event_data = EventResponse.model_validate(event).model_dump(mode="json")
     event_id_str = str(event.id)
