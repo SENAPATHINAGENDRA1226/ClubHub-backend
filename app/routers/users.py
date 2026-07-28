@@ -60,7 +60,7 @@ def _build_admin_user_response(user: User, committee_ids: List[uuid.UUID]) -> Ad
 async def list_users(
     role: Optional[UserRole] = Query(None, description="Filter by user role"),
     search: Optional[str] = Query(None, description="Search by email or name"),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(require_role("admin")),
     db: AsyncSession = Depends(get_async_session),
