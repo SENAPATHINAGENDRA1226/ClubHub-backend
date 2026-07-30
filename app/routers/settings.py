@@ -51,11 +51,14 @@ SETTING_DEFAULTS = {
 
 async def _ensure_defaults(db: AsyncSession) -> None:
     """Seed default settings if they don't exist yet."""
-    for key, default_value in SETTING_DEFAULTS.items():
-        res = await db.execute(select(SiteSetting).filter_by(key=key))
-        if not res.scalars().first():
-            db.add(SiteSetting(key=key, value=default_value))
-    await db.commit()
+    try:
+        for key, default_value in SETTING_DEFAULTS.items():
+            res = await db.execute(select(SiteSetting).filter_by(key=key))
+            if not res.scalars().first():
+                db.add(SiteSetting(key=key, value=default_value))
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
 
 
 # ── Public endpoint (no auth) – used by LoginPage/OnboardingPage ───────────
@@ -71,7 +74,12 @@ async def get_public_setting(
     res = await db.execute(select(SiteSetting).filter_by(key=key))
     setting = res.scalars().first()
     if not setting:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Setting not found")
+        # Fallback inline creation
+        default_val = SETTING_DEFAULTS.get(key, {})
+        setting = SiteSetting(key=key, value=default_val)
+        db.add(setting)
+        await db.commit()
+        await db.refresh(setting)
     return setting
 
 
@@ -97,7 +105,11 @@ async def get_setting(
     res = await db.execute(select(SiteSetting).filter_by(key=key))
     setting = res.scalars().first()
     if not setting:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Setting not found")
+        default_val = SETTING_DEFAULTS.get(key, {})
+        setting = SiteSetting(key=key, value=default_val)
+        db.add(setting)
+        await db.commit()
+        await db.refresh(setting)
     return setting
 
 
@@ -113,31 +125,39 @@ async def update_setting(
     res = await db.execute(select(SiteSetting).filter_by(key=key))
     setting = res.scalars().first()
     if not setting:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Setting not found")
+        setting = SiteSetting(key=key, value=dict(body.value or {}))
+        db.add(setting)
+    else:
+        setting.value = dict(body.value or {})
+        flag_modified(setting, "value")
 
-    setting.value = dict(body.value)
-    flag_modified(setting, "value")
     await db.commit()
     await db.refresh(setting)
 
-    # Audit
-    await write_audit_log(
-        db,
-        actor_user_id=current_user.id,
-        action="updated",
-        entity_type="setting",
-        entity_id=setting.id,
-        payload={"key": key},
-    )
+    # Audit (Non-blocking)
+    try:
+        await write_audit_log(
+            db,
+            actor_user_id=current_user.id,
+            action="updated",
+            entity_type="setting",
+            entity_id=setting.id,
+            payload={"key": key},
+        )
+    except Exception:
+        pass
 
-    # Broadcast
-    await broadcast(
-        channel="settings",
-        event_type="settings.updated",
-        entity_id=str(setting.id),
-        action="updated",
-        payload={"key": key, "value": setting.value},
-    )
+    # Broadcast (Non-blocking)
+    try:
+        await broadcast(
+            channel="settings",
+            event_type="settings.updated",
+            entity_id=str(setting.id),
+            action="updated",
+            payload={"key": key, "value": setting.value},
+        )
+    except Exception:
+        pass
 
     return setting
 
