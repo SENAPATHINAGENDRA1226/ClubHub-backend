@@ -8,6 +8,7 @@ from sqlalchemy.future import select
 
 from app.core.database import get_async_session
 from app.core.deps import require_role
+from app.models.content import Announcement, Certificate
 from app.models.enums import EventCategory
 from app.models.event import Event, EventRegistration
 from app.models.user import User
@@ -71,8 +72,8 @@ async def list_events_admin(
     db: AsyncSession = Depends(get_async_session),
 ):
     """Admin list: all events (including inactive), with search and sort."""
-    query = select(Event)
-    count_query = select(func.count(Event.id))
+    query = select(Event).filter(Event.is_active == True)
+    count_query = select(func.count(Event.id)).filter(Event.is_active == True)
 
     if category:
         query = query.filter(Event.category == category)
@@ -333,15 +334,24 @@ async def delete_event(
             detail="Event not found",
         )
 
-    # Clean up event registrations explicitly to prevent foreign key or lazy load issues
+    # Clean up event registrations, certificates, and announcements explicitly
     reg_res = await db.execute(select(EventRegistration).filter_by(event_id=event_id))
     for r in reg_res.scalars().all():
         await db.delete(r)
+
+    cert_res = await db.execute(select(Certificate).filter_by(event_id=event_id))
+    for c in cert_res.scalars().all():
+        await db.delete(c)
+
+    ann_res = await db.execute(select(Announcement).filter_by(event_id=event_id))
+    for a in ann_res.scalars().all():
+        await db.delete(a)
 
     event_data = EventResponse.model_validate(event).model_dump(mode="json")
     event_id_str = str(event.id)
     event_title = event.title
 
+    event.is_active = False
     await db.delete(event)
     await db.commit()
 
