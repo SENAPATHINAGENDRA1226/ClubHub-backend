@@ -29,6 +29,7 @@ def _build_admin_user_response(user: User, committee_ids: List[uuid.UUID]) -> Ad
     profile_dict = None
     if user.student_profile:
         profile_dict = {
+            "id": str(user.student_profile.id),
             "full_name": user.student_profile.full_name,
             "branch": user.student_profile.branch,
             "section": user.student_profile.section,

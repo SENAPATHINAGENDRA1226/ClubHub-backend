@@ -72,8 +72,8 @@ async def list_events_admin(
     db: AsyncSession = Depends(get_async_session),
 ):
     """Admin list: all events (including inactive), with search and sort."""
-    query = select(Event).filter(Event.is_active == True)
-    count_query = select(func.count(Event.id)).filter(Event.is_active == True)
+    query = select(Event)
+    count_query = select(func.count(Event.id))
 
     if category:
         query = query.filter(Event.category == category)
