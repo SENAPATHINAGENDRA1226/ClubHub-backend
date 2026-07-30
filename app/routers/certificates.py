@@ -63,6 +63,34 @@ async def get_my_certificates(
     )
 
 
+@router.get("", response_model=PaginatedCertificatesResponse)
+async def list_certificates(
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    current_user: User = Depends(require_role("admin", "committee")),
+    db: AsyncSession = Depends(get_async_session),
+):
+    query = (
+        select(Certificate)
+        .options(selectinload(Certificate.event))
+        .order_by(Certificate.issued_at.desc())
+    )
+    count_query = select(func.count(Certificate.id))
+
+    total_res = await db.execute(count_query)
+    total = total_res.scalar() or 0
+
+    res = await db.execute(query.limit(limit).offset(offset))
+    certificates = res.scalars().all()
+
+    return PaginatedCertificatesResponse(
+        items=[CertificateResponse.model_validate(c) for c in certificates],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
+
+
 @router.post("", response_model=CertificateResponse, status_code=status.HTTP_201_CREATED)
 async def issue_certificate(
     body: CertificateCreate,
