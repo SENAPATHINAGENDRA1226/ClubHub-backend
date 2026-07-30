@@ -8,7 +8,7 @@ from sqlalchemy.future import select
 
 from app.core.database import get_async_session
 from app.core.deps import require_role
-from app.models.content import Announcement, Certificate
+from app.models.content import Certificate
 from app.models.enums import EventCategory
 from app.models.event import Event, EventRegistration
 from app.models.user import User
