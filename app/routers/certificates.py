@@ -228,10 +228,10 @@ async def bulk_upload_certificates(
     current_user: User = Depends(require_role("admin")),
     db: AsyncSession = Depends(get_async_session),
 ):
-    if not file.filename.endswith(".zip"):
+    if not file.filename or not file.filename.lower().endswith(".zip"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File must be a .zip archive",
+            detail="Uploaded file must be a .zip archive (e.g. certificates.zip)",
         )
 
     e_res = await db.execute(select(Event).filter_by(id=event_id))
@@ -261,6 +261,8 @@ async def bulk_upload_certificates(
 
     for entry_path in pdf_entries:
         filename = os.path.basename(entry_path)
+        if not filename:
+            continue
         base_name = os.path.splitext(filename)[0].strip()
 
         matched_student_id: Optional[uuid.UUID] = None
@@ -283,8 +285,33 @@ async def bulk_upload_certificates(
                 .filter(func.lower(User.email) == base_name.lower())
             )
             user = user_res.scalars().first()
-            if user and user.student_profile:
-                matched_student_id = user.student_profile.id
+            if user:
+                if not user.student_profile:
+                    new_sp = StudentProfile(
+                        id=uuid.uuid4(),
+                        user_id=user.id,
+                        full_name=user.email.split("@")[0].capitalize(),
+                        branch="General",
+                        section="A",
+                        phone_number="",
+                        academic_year="2026",
+                        onboarding_completed=False,
+                    )
+                    db.add(new_sp)
+                    await db.flush()
+                    matched_student_id = new_sp.id
+                else:
+                    matched_student_id = user.student_profile.id
+            else:
+                # Strategy 3: Match by Student Full Name
+                sp_res = await db.execute(
+                    select(StudentProfile).filter(
+                        func.lower(StudentProfile.full_name) == base_name.lower()
+                    )
+                )
+                sp = sp_res.scalars().first()
+                if sp:
+                    matched_student_id = sp.id
 
         if matched_student_id:
             pdf_bytes = z.read(entry_path)
