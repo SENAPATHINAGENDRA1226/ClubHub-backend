@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse, RedirectResponse
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -97,12 +97,16 @@ async def issue_certificate(
     current_user: User = Depends(require_role("admin")),
     db: AsyncSession = Depends(get_async_session),
 ):
-    sp_res = await db.execute(select(StudentProfile).filter_by(id=body.student_id))
+    sp_res = await db.execute(
+        select(StudentProfile).filter(
+            or_(StudentProfile.id == body.student_id, StudentProfile.user_id == body.student_id)
+        )
+    )
     student_profile = sp_res.scalars().first()
     if not student_profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Student profile not found",
+            detail="Student profile not found for the given ID",
         )
 
     e_res = await db.execute(select(Event).filter_by(id=body.event_id))
@@ -303,6 +307,23 @@ async def bulk_upload_certificates(
             unmatched_files.append(filename)
 
     await db.commit()
+
+    if matched_count > 0:
+        await write_audit_log(
+            db,
+            actor_user_id=current_user.id,
+            action="created",
+            entity_type="certificate",
+            payload={"event_id": str(event_id), "bulk_matched": matched_count},
+        )
+
+        await broadcast(
+            channel="certificates",
+            event_type="certificates.bulk.created",
+            entity_id=str(event_id),
+            action="created",
+            payload={"event_id": str(event_id), "matched_count": matched_count},
+        )
 
     return {
         "total_files": len(pdf_entries),

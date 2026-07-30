@@ -7,6 +7,7 @@ from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.database import get_async_session
 from app.core.deps import get_current_user, require_role
@@ -114,7 +115,8 @@ async def update_setting(
     if not setting:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Setting not found")
 
-    setting.value = body.value
+    setting.value = dict(body.value)
+    flag_modified(setting, "value")
     await db.commit()
     await db.refresh(setting)
 
@@ -147,10 +149,13 @@ async def upload_logo(
     current_user: User = Depends(require_role("admin")),
     db: AsyncSession = Depends(get_async_session),
 ):
-    if not file.content_type or not file.content_type.startswith("image/"):
+    ext = os.path.splitext(file.filename or "logo.png")[1].lower() or ".png"
+    allowed_exts = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}
+    is_img_type = file.content_type and file.content_type.startswith("image/")
+    if not is_img_type and ext not in allowed_exts:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File must be an image",
+            detail="File must be an image (.png, .jpg, .jpeg, .webp, .svg)",
         )
 
     media_dir = os.path.join(
@@ -158,7 +163,6 @@ async def upload_logo(
     )
     os.makedirs(media_dir, exist_ok=True)
 
-    ext = os.path.splitext(file.filename or "logo.png")[1] or ".png"
     filename = f"club_logo{ext}"
     file_path = os.path.join(media_dir, filename)
 
@@ -173,9 +177,10 @@ async def upload_logo(
     res = await db.execute(select(SiteSetting).filter_by(key="club_profile"))
     setting = res.scalars().first()
     if setting:
-        val = dict(setting.value)
+        val = dict(setting.value or {})
         val["logo_url"] = logo_url
         setting.value = val
+        flag_modified(setting, "value")
         await db.commit()
         await db.refresh(setting)
 
