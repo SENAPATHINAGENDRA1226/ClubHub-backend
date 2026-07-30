@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/clubhub_db"
+    FRONTEND_URL: str = "https://club-hub-frontend-iota.vercel.app"
     JWT_SECRET: str = "super_secret_key_122624"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30

@@ -31,6 +31,7 @@ SETTING_DEFAULTS = {
         "club_name": "ClubHub",
         "tagline": "Where builders meet.",
         "logo_url": None,
+        "frontend_url": "https://club-hub-frontend-iota.vercel.app",
         "footer_text": "© 2026 ClubHub. All rights reserved.",
     },
     "academic_config": {
