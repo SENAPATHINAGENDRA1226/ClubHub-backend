@@ -104,10 +104,26 @@ async def issue_certificate(
     )
     student_profile = sp_res.scalars().first()
     if not student_profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Student profile not found for the given ID",
-        )
+        u_res = await db.execute(select(User).filter_by(id=body.student_id))
+        user_obj = u_res.scalars().first()
+        if user_obj:
+            student_profile = StudentProfile(
+                id=uuid.uuid4(),
+                user_id=user_obj.id,
+                full_name=user_obj.email.split("@")[0].capitalize(),
+                branch="General",
+                section="A",
+                phone_number="",
+                academic_year="2026",
+                onboarding_completed=False,
+            )
+            db.add(student_profile)
+            await db.flush()
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Student profile or user not found for ID '{body.student_id}'",
+            )
 
     e_res = await db.execute(select(Event).filter_by(id=body.event_id))
     event = e_res.scalars().first()
