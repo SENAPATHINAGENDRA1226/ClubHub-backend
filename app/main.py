@@ -1,9 +1,11 @@
-import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
+from app.core.database import engine
+from app.models import BaseModel
 from app.routers import (
     achievements,
     admin_import,
@@ -26,9 +28,18 @@ from app.routers import (
 )
 from app.ws import router as ws_router
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(BaseModel.metadata.create_all)
+    yield
+
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 
 # CORS Middleware setup - Allow all origins for production frontend integration
