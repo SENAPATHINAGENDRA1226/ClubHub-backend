@@ -343,10 +343,6 @@ async def delete_event(
     for c in cert_res.scalars().all():
         await db.delete(c)
 
-    ann_res = await db.execute(select(Announcement).filter_by(event_id=event_id))
-    for a in ann_res.scalars().all():
-        await db.delete(a)
-
     event_data = EventResponse.model_validate(event).model_dump(mode="json")
     event_id_str = str(event.id)
     event_title = event.title
