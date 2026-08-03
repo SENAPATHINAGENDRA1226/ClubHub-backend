@@ -18,7 +18,7 @@ class Grievance(BaseModel):
     student_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False)
     subject: Mapped[str] = mapped_column(String, nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
-    category: Mapped[GrievanceCategory] = mapped_column(SQLEnum(GrievanceCategory), server_default="other", default=GrievanceCategory.OTHER, nullable=False)
+    category: Mapped[GrievanceCategory] = mapped_column(SQLEnum(GrievanceCategory, values_callable=lambda x: [e.value for e in x]), server_default="other", default=GrievanceCategory.OTHER, nullable=False)
     is_anonymous: Mapped[bool] = mapped_column(Boolean, server_default="false", default=False, nullable=False)
     status: Mapped[GrievanceStatus] = mapped_column(SQLEnum(GrievanceStatus), default=GrievanceStatus.OPEN, nullable=False)
     submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

@@ -27,7 +27,7 @@ async def run_tests():
         })
         print("Status:", res.status_code, "Body:", res.json())
         assert res.status_code == 404, res.text
-        assert res.json()["detail"]["code"] == "ACCOUNT_NOT_FOUND", res.text
+        assert res.json()["detail"] == "ACCOUNT_NOT_FOUND", res.text
 
         print(f"3. Testing Student Signup ({student_email})...")
         signup_payload = {
@@ -47,7 +47,7 @@ async def run_tests():
 
         print("4. Testing Admin Login...")
         res = await client.post("/api/auth/admin/login", json={
-            "email": "admin@clubhub.com",
+            "email": "admin@csmd-dlides-club.com",
             "password": "admin123"
         })
         print("Admin Login Status:", res.status_code)

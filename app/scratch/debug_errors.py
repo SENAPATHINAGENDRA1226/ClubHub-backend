@@ -14,7 +14,7 @@ async def run_debug():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # Login
         res = await client.post("/api/auth/admin/login", json={
-            "email": "admin@clubhub.com",
+            "email": "admin@csmd-dlides-club.com",
             "password": "admin123"
         })
         assert res.status_code == 200, res.text

@@ -21,10 +21,10 @@ class SiteSettingUpdate(BaseModel):
 
 
 class ClubProfileValue(BaseModel):
-    club_name: str = "ClubHub"
+    club_name: str = "CSMD DLIDES CLUB"
     tagline: str = "Where builders meet."
     logo_url: Optional[str] = None
-    footer_text: str = "© 2026 ClubHub. All rights reserved."
+    footer_text: str = "© 2026 CSMD DLIDES CLUB. All rights reserved."
 
 
 class AcademicConfigValue(BaseModel):

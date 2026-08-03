@@ -28,11 +28,11 @@ router = APIRouter(prefix="/api/settings", tags=["Settings"])
 # ── Defaults for first-run seeding ──────────────────────────────────────────
 SETTING_DEFAULTS = {
     "club_profile": {
-        "club_name": "ClubHub",
+        "club_name": "CSMD DLIDES CLUB",
         "tagline": "Where builders meet.",
         "logo_url": None,
         "frontend_url": "https://club-hub-frontend-iota.vercel.app",
-        "footer_text": "© 2026 ClubHub. All rights reserved.",
+        "footer_text": "© 2026 CSMD DLIDES CLUB. All rights reserved.",
     },
     "academic_config": {
         "branches": ["CSE", "CSM", "CSD", "ECE", "EEE", "ME", "CE"],

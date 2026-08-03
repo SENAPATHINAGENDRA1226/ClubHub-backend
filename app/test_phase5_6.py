@@ -21,7 +21,7 @@ async def run_tests():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         print("1. Admin Login...")
         res = await client.post("/api/auth/admin/login", json={
-            "email": "admin@clubhub.com",
+            "email": "admin@csmd-dlides-club.com",
             "password": "admin123"
         })
         assert res.status_code == 200, res.text
@@ -135,7 +135,7 @@ async def run_tests():
         sent_args = mock_ws.send_json.call_args[0][0]
         print("WebSocket Manager Received Broadcast:", sent_args)
         assert sent_args["channel"] == "events"
-        assert sent_args["event_type"] == "event.created"
+        assert sent_args["event_type"] == "events.created"
 
         await ws_manager.disconnect(mock_ws)
 

@@ -38,7 +38,7 @@ def generate_certificate_pdf(
 
     c.setFont("Helvetica-Oblique", 14)
     c.setFillColor(colors.HexColor("#64748b"))
-    c.drawCentredString(width / 2, height - 130, "ClubHub Campus Community")
+    c.drawCentredString(width / 2, height - 130, "CSMD DLIDES CLUB Campus Community")
 
     # Recipient
     c.setFont("Helvetica", 14)

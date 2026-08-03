@@ -26,12 +26,12 @@ from app.models.user import AdminProfile, User
 async def seed_data():
     async with AsyncSessionLocal() as session:
         # 1. Seed Admin User
-        result = await session.execute(select(User).filter_by(email="admin@clubhub.com"))
+        result = await session.execute(select(User).filter_by(email="admin@csmd-dlides-club.com"))
         admin_user = result.scalars().first()
 
         if not admin_user:
             admin_user = User(
-                email="admin@clubhub.com",
+                email="admin@csmd-dlides-club.com",
                 hashed_password=get_password_hash("admin123"),
                 role=UserRole.ADMIN,
                 is_active=True,
@@ -46,7 +46,7 @@ async def seed_data():
                 designation="Chief Administrator",
             )
             session.add(admin_profile)
-            print("Seeded Admin User: admin@clubhub.com (password: admin123)")
+            print("Seeded Admin User: admin@csmd-dlides-club.com (password: admin123)")
 
         # 2. Seed 3 Committees
         committees_data = [

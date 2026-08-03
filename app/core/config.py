@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "ClubHub API"
+    PROJECT_NAME: str = "CSMD DLIDES CLUB API"
     DEBUG: bool = True
 
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/clubhub_db"
@@ -31,4 +31,4 @@ class Settings(BaseSettings):
     )
 
 
-settings = Settings()
+settings = Settings() 

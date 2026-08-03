@@ -11,7 +11,7 @@ from app.core.security import get_password_hash
 async def seed_data():
     async with AsyncSessionLocal() as session:
         # Check if we have an admin user, if not create one for adding these
-        res = await session.execute(User.__table__.select().where(User.email == "admin@clubhub.com"))
+        res = await session.execute(User.__table__.select().where(User.email == "admin@csmd-dlides-club.com"))
         admin_row = res.fetchone()
         
         if not admin_row:
@@ -19,7 +19,7 @@ async def seed_data():
             admin_id = uuid.uuid4()
             session.add(User(
                 id=admin_id,
-                email="admin@clubhub.com",
+                email="admin@csmd-dlides-club.com",
                 password_hash=get_password_hash("admin123"),
                 role=UserRole.ADMIN,
                 is_active=True,

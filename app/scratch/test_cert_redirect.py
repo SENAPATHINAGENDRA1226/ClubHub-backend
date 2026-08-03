@@ -17,7 +17,7 @@ async def test_redirect():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # 1. Admin login
         res = await client.post("/api/auth/admin/login", json={
-            "email": "admin@clubhub.com",
+            "email": "admin@csmd-dlides-club.com",
             "password": "admin123"
         })
         assert res.status_code == 200, res.text

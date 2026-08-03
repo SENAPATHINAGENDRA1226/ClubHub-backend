@@ -20,7 +20,7 @@ async def run_tests():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         print("1. Admin Login...")
         res = await client.post("/api/auth/admin/login", json={
-            "email": "admin@clubhub.com",
+            "email": "admin@csmd-dlides-club.com",
             "password": "admin123"
         })
         assert res.status_code == 200, res.text
@@ -84,7 +84,7 @@ async def run_tests():
         reg_num = reg_data["registration_number"]
         qr_url = reg_data["qr_code_image_url"]
         assert reg_num.startswith("CH-2026-")
-        assert qr_url == f"/media/qr/{reg_num}.png"
+        assert qr_url == f"/api/registrations/qr/{reg_num}.png"
 
         # Verify physical QR image file on disk
         qr_file_path = os.path.join(backend_dir, "media", "qr", f"{reg_num}.png")

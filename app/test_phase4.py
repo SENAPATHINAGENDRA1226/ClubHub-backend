@@ -19,7 +19,7 @@ async def run_tests():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         print("1. Admin Login...")
         res = await client.post("/api/auth/admin/login", json={
-            "email": "admin@clubhub.com",
+            "email": "admin@csmd-dlides-club.com",
             "password": "admin123"
         })
         assert res.status_code == 200, res.text
@@ -169,7 +169,7 @@ async def run_tests():
 
         print("12. Testing Admin Manage Users (Committee Scoped Account Creation)...")
         res = await client.post("/api/users", json={
-            "email": f"committee_lead_{ts}@clubhub.com",
+            "email": f"committee_lead_{ts}@csmd-dlides-club.com",
             "password": "CommitteePass123",
             "role": "committee",
             "full_name": "Committee Admin Lead",
