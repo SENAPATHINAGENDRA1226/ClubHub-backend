@@ -85,9 +85,9 @@ class UserResponse(BaseModel):
 class OnboardingStudentRequest(BaseModel):
     branch: str = Field(..., min_length=1)
     section: str = Field(..., min_length=1)
-    phone_number: str = Field(..., min_length=5)
+    phone_number: str = Field(..., pattern=r"^\+91\d{10}$")
     academic_year: str = Field(..., min_length=1)
-    cgpa: Optional[float] = None
+    cgpa: Optional[float] = Field(None, ge=0.0, le=10.0)
     linkedin_url: Optional[str] = None
     github_url: Optional[str] = None
     instagram_url: Optional[str] = None

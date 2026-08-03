@@ -65,7 +65,7 @@ async def run_tests():
         onboarding_payload = {
             "branch": "CSE",
             "section": "A",
-            "phone_number": "9876543210",
+            "phone_number": "+919876543210",
             "academic_year": "3rd Year",
             "cgpa": 8.9,
             "linkedin_url": "https://linkedin.com/in/janestudent",
