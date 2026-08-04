@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 
 from app.core.config import settings
 from app.core.database import engine
@@ -34,6 +35,12 @@ from app.ws import router as ws_router
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.create_all)
+        # Safe migration helper to add missing columns on remote DB
+        try:
+            await conn.execute(text("ALTER TABLE committee_members ADD COLUMN IF NOT EXISTS faculty_id VARCHAR;"))
+            await conn.execute(text("ALTER TABLE committee_members ADD COLUMN IF NOT EXISTS phone_number VARCHAR;"))
+        except Exception as e:
+            print("Lifespan migration warning:", e)
     yield
 
 
