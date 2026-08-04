@@ -10,6 +10,8 @@ class CommitteeMemberCreate(BaseModel):
     full_name: str = Field(..., min_length=2)
     email: Optional[str] = ""
     role_title: str
+    faculty_id: Optional[str] = None
+    phone_number: Optional[str] = None
     photo_url: Optional[str] = None
     bio: Optional[str] = None
     order_index: int = 0
@@ -20,6 +22,8 @@ class CommitteeMemberUpdate(BaseModel):
     full_name: Optional[str] = None
     email: Optional[str] = None
     role_title: Optional[str] = None
+    faculty_id: Optional[str] = None
+    phone_number: Optional[str] = None
     photo_url: Optional[str] = None
     bio: Optional[str] = None
     order_index: Optional[int] = None
@@ -33,6 +37,8 @@ class CommitteeMemberResponse(BaseModel):
     full_name: str
     email: str
     role_title: str
+    faculty_id: Optional[str] = None
+    phone_number: Optional[str] = None
     photo_url: Optional[str] = None
     bio: Optional[str] = None
     order_index: int

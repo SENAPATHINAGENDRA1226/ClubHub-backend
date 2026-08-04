@@ -257,6 +257,8 @@ async def add_committee_member(
         full_name=body.full_name,
         email=body.email or (matched_user.email if matched_user else ""),
         role_title=body.role_title,
+        faculty_id=body.faculty_id,
+        phone_number=body.phone_number,
         photo_url=body.photo_url,
         bio=body.bio,
         order_index=body.order_index,
