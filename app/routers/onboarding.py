@@ -51,6 +51,8 @@ async def onboard_student(
     profile.linkedin_url = body.linkedin_url
     profile.github_url = body.github_url
     profile.instagram_url = body.instagram_url
+    if body.profile_photo_url is not None:
+        profile.profile_photo_url = body.profile_photo_url
     profile.onboarding_completed = True
 
     # User is no longer on first login after onboarding

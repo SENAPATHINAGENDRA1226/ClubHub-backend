@@ -91,3 +91,4 @@ class OnboardingStudentRequest(BaseModel):
     linkedin_url: Optional[str] = None
     github_url: Optional[str] = None
     instagram_url: Optional[str] = None
+    profile_photo_url: Optional[str] = None

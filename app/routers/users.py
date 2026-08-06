@@ -1,14 +1,15 @@
+import os
 import uuid
-from typing import List, Optional
+from typing import Dict, Any, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_async_session
-from app.core.deps import require_role
+from app.core.deps import get_current_user, require_role
 from app.core.security import get_password_hash
 from app.models.committee import CommitteeAdmin
 from app.models.enums import UserRole
@@ -23,6 +24,53 @@ from app.services.audit import write_audit_log
 from app.services.broadcast import broadcast
 
 router = APIRouter(prefix="/api/users", tags=["Admin Manage Users"])
+
+
+@router.post("/profile-photo", response_model=Dict[str, Any])
+async def upload_profile_photo(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    ext = os.path.splitext(file.filename or "profile.png")[1].lower() or ".png"
+    allowed_exts = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}
+    is_img_type = file.content_type and file.content_type.startswith("image/")
+    if not is_img_type and ext not in allowed_exts:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File must be an image (.png, .jpg, .jpeg, .webp, .svg)",
+        )
+
+    media_dir = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "media", "uploads", "profiles"
+    )
+    os.makedirs(media_dir, exist_ok=True)
+
+    filename = f"profile_{current_user.id}_{uuid.uuid4().hex[:8]}{ext}"
+    file_path = os.path.join(media_dir, filename)
+
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    photo_url = f"/media/uploads/profiles/{filename}"
+
+    if current_user.role == UserRole.STUDENT:
+        res = await db.execute(select(StudentProfile).filter_by(user_id=current_user.id))
+        sp = res.scalars().first()
+        if sp:
+            sp.profile_photo_url = photo_url
+            await db.commit()
+            await db.refresh(sp)
+    elif current_user.role == UserRole.ADMIN:
+        res = await db.execute(select(AdminProfile).filter_by(user_id=current_user.id))
+        ap = res.scalars().first()
+        if ap:
+            ap.profile_photo_url = photo_url
+            await db.commit()
+            await db.refresh(ap)
+
+    return {"profile_photo_url": photo_url}
 
 
 def _build_admin_user_response(user: User, committee_ids: List[uuid.UUID]) -> AdminUserResponse:
