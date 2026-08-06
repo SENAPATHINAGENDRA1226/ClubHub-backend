@@ -7,9 +7,8 @@ from sqlalchemy.future import select
 
 from app.core.database import get_async_session
 from app.core.deps import get_current_user, require_role
-from app.models.certificate import Certificate
 from app.models.committee import Committee
-from app.models.content import Alumni
+from app.models.content import Alumni ,Certificate
 from app.models.enums import UserRole
 from app.models.event import Event, EventRegistration
 from app.models.user import StudentProfile, User
