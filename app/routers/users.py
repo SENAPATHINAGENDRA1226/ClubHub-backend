@@ -111,7 +111,7 @@ async def list_users(
     search: Optional[str] = Query(None, description="Search by email or name"),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "committee")),
     db: AsyncSession = Depends(get_async_session),
 ):
     query = (

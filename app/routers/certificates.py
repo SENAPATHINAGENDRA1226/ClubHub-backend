@@ -94,7 +94,7 @@ async def list_certificates(
 @router.post("", response_model=CertificateResponse, status_code=status.HTTP_201_CREATED)
 async def issue_certificate(
     body: CertificateCreate,
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role("admin", "committee")),
     db: AsyncSession = Depends(get_async_session),
 ):
     sp_res = await db.execute(
