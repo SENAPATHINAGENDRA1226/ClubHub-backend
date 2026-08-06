@@ -8,7 +8,7 @@ from app.schemas.events import EventResponse
 
 
 class CertificateCreate(BaseModel):
-    student_id: uuid.UUID
+    student_id: str
     event_id: uuid.UUID
     certificate_type: CertificateType
     file_url: Optional[str] = None

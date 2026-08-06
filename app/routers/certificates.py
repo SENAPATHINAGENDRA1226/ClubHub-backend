@@ -97,9 +97,95 @@ async def issue_certificate(
     current_user: User = Depends(require_role("admin", "committee")),
     db: AsyncSession = Depends(get_async_session),
 ):
+    # Handle "all" students option to issue certificates to all registered/active students
+    if str(body.student_id).strip().lower() == "all":
+        e_res = await db.execute(select(Event).filter_by(id=body.event_id))
+        event = e_res.scalars().first()
+        if not event:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+
+        sp_res = await db.execute(select(StudentProfile))
+        all_profiles = list(sp_res.scalars().all())
+
+        # Ensure all users with STUDENT role have profiles
+        existing_profile_uids = {sp.user_id for sp in all_profiles if sp.user_id}
+        u_res = await db.execute(select(User).filter_by(role=UserRole.STUDENT))
+        for u in u_res.scalars().all():
+            if u.id not in existing_profile_uids:
+                new_sp = StudentProfile(
+                    id=uuid.uuid4(),
+                    user_id=u.id,
+                    full_name=u.email.split("@")[0].capitalize(),
+                    branch="General",
+                    section="A",
+                    phone_number="",
+                    academic_year="2026",
+                    onboarding_completed=False,
+                )
+                db.add(new_sp)
+                await db.flush()
+                all_profiles.append(new_sp)
+
+        if not all_profiles:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No students found to issue certificates")
+
+        now_utc = datetime.now(timezone.utc)
+        cert_type_str = body.certificate_type.value if hasattr(body.certificate_type, "value") else str(body.certificate_type)
+        created_certs = []
+
+        for sp in all_profiles:
+            # Avoid duplicate certificate for same student and event
+            dup_check = await db.execute(select(Certificate).filter_by(student_id=sp.id, event_id=event.id))
+            if dup_check.scalars().first():
+                continue
+
+            cert_id = uuid.uuid4()
+            if body.file_url and (body.file_url.startswith("http://") or body.file_url.startswith("https://")):
+                file_url = body.file_url
+            else:
+                file_url = generate_certificate_pdf(
+                    certificate_id=cert_id,
+                    student_name=sp.full_name,
+                    event_title=event.title,
+                    certificate_type=cert_type_str,
+                    issued_at=now_utc,
+                )
+
+            cert = Certificate(
+                id=cert_id,
+                student_id=sp.id,
+                event_id=event.id,
+                certificate_type=body.certificate_type,
+                file_url=file_url,
+                issued_at=now_utc,
+            )
+            db.add(cert)
+            created_certs.append(cert)
+
+        await db.commit()
+
+        # Return the last created or existing certificate
+        res = await db.execute(
+            select(Certificate)
+            .options(selectinload(Certificate.event))
+            .filter_by(event_id=event.id)
+            .order_by(Certificate.issued_at.desc())
+        )
+        last_cert = res.scalars().first()
+        if not last_cert:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Certificates already issued for all students")
+
+        return last_cert
+
+    # Single Student ID resolution (UUID string)
+    try:
+        student_id_uuid = uuid.UUID(str(body.student_id))
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid student ID format")
+
     sp_res = await db.execute(
         select(StudentProfile).filter(
-            or_(StudentProfile.id == body.student_id, StudentProfile.user_id == body.student_id)
+            or_(StudentProfile.id == student_id_uuid, StudentProfile.user_id == student_id_uuid)
         )
     )
     student_profile = sp_res.scalars().first()
