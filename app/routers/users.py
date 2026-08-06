@@ -75,29 +75,32 @@ async def upload_profile_photo(
 
 def _build_admin_user_response(user: User, committee_ids: List[uuid.UUID]) -> AdminUserResponse:
     profile_dict = None
-    if user.student_profile:
-        profile_dict = {
-            "id": str(user.student_profile.id),
-            "full_name": user.student_profile.full_name,
-            "branch": user.student_profile.branch,
-            "section": user.student_profile.section,
-            "phone_number": user.student_profile.phone_number,
-            "academic_year": user.student_profile.academic_year,
-            "profile_photo_url": user.student_profile.profile_photo_url,
-        }
-    elif user.admin_profile:
-        profile_dict = {
-            "full_name": user.admin_profile.full_name,
-            "designation": user.admin_profile.designation,
-            "profile_photo_url": user.admin_profile.profile_photo_url,
-        }
+    try:
+        if user.student_profile:
+            profile_dict = {
+                "id": str(user.student_profile.id),
+                "full_name": user.student_profile.full_name or user.email.split("@")[0].capitalize(),
+                "branch": user.student_profile.branch or "CSM",
+                "section": user.student_profile.section or "A",
+                "phone_number": user.student_profile.phone_number or "",
+                "academic_year": user.student_profile.academic_year or "3rd Year",
+                "profile_photo_url": user.student_profile.profile_photo_url,
+            }
+        elif user.admin_profile:
+            profile_dict = {
+                "full_name": user.admin_profile.full_name or "Administrator",
+                "designation": user.admin_profile.designation or "Admin",
+                "profile_photo_url": user.admin_profile.profile_photo_url,
+            }
+    except Exception as e:
+        print(f"Error building profile dict for user {user.id}: {e}")
 
     return AdminUserResponse(
         id=user.id,
         email=user.email,
         role=user.role,
-        is_active=user.is_active,
-        is_first_login=user.is_first_login,
+        is_active=user.is_active if user.is_active is not None else True,
+        is_first_login=user.is_first_login if user.is_first_login is not None else False,
         profile=profile_dict,
         committee_ids=committee_ids,
         created_at=user.created_at,
