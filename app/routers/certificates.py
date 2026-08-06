@@ -1,3 +1,4 @@
+from app.models.enums import UserRole
 import io
 import os
 import uuid

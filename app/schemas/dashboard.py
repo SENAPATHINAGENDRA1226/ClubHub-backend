@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 
 
@@ -18,6 +18,8 @@ class StudentDashboardResponse(BaseModel):
     active_committees_count: int
     my_registrations_count: int
     quick_links: List[Dict[str, Any]]
+    monthly_activity: Optional[List[Dict[str, Any]]] = None
+    live_metrics: Optional[Dict[str, Any]] = None
 
 
 class AdminDashboardResponse(BaseModel):
