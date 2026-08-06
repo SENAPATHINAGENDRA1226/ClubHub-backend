@@ -43,6 +43,8 @@ async def onboard_student(
             detail="Onboarding already completed. Pass force=true to update profile.",
         )
 
+    if body.full_name:
+        profile.full_name = body.full_name.strip()
     profile.branch = body.branch
     profile.section = body.section
     profile.phone_number = body.phone_number

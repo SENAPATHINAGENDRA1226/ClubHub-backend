@@ -83,12 +83,25 @@ class UserResponse(BaseModel):
 
 
 class OnboardingStudentRequest(BaseModel):
+    full_name: Optional[str] = Field(None, min_length=1, max_length=100)
     branch: str = Field(..., min_length=1)
     section: str = Field(..., min_length=1)
-    phone_number: str = Field(..., pattern=r"^\+91\d{10}$")
+    phone_number: str = Field(..., min_length=7)
     academic_year: str = Field(..., min_length=1)
     cgpa: Optional[float] = Field(None, ge=0.0, le=10.0)
     linkedin_url: Optional[str] = None
     github_url: Optional[str] = None
     instagram_url: Optional[str] = None
     profile_photo_url: Optional[str] = None
+
+    @model_validator(mode="after")
+    def clean_and_format(self) -> "OnboardingStudentRequest":
+        if self.phone_number:
+            digits = "".join(filter(str.isdigit, self.phone_number))
+            if len(digits) == 10:
+                self.phone_number = f"+91{digits}"
+            elif len(digits) == 12 and digits.startswith("91"):
+                self.phone_number = f"+{digits}"
+            elif digits:
+                self.phone_number = f"+{digits}" if not self.phone_number.startswith("+") else self.phone_number
+        return self
